@@ -1,0 +1,56 @@
+import org.earnie.*;
+
+dialect "java"
+
+//rule "dump"
+//	salience 1000
+//	when 
+//		$r : Relative()		
+//$r : Relative(giftee == null)
+//	Number($rndSelect : intValue) from accumulate(Relative(spouse != $r, this != $r, giftee != $r, gifted == false, $rnd : random), min($rnd)) 			then
+//		System.out.println($rndSelect);
+//end
+
+
+rule "r1"
+	when
+		$r : Relative(giftee == null,  next == true)
+		Number($rndSelect : intValue) from accumulate(Relative(spouse != $r, this != $r, giftee != $r, gifted == false, $rnd : random), min($rnd)) 		
+		$r2 : Relative(random == $rndSelect)
+	then
+		modify ($r) {
+			setGiftee($r2);
+		}
+		modify ($r2) {
+			setGifted(true),
+			setNext(true);
+		}
+		System.out.println($r + "\n\t" + $r2);
+end
+
+rule "r2"
+	when 
+		$r : Relative(next == true, giftee != null) 
+		$r2 : Relative(spouse != $r, this != $r, giftee != $r, giftee == null)
+	then
+		modify ($r) {
+			setNext(false);
+		}
+		modify ($r2) {
+			setNext(true);
+		}
+end
+
+rule "r3"
+	when 
+		Number(intValue == 1) from accumulate ($rel : Relative(giftee == null), count($rel))
+		$r : Relative(giftee == null) 
+		$r2 : Relative(gifted == false, this != $r)
+	then
+		modify ($r) {
+			setGiftee($r2);
+		}
+		modify ($r2) {
+			setGifted(true);
+		}
+end
